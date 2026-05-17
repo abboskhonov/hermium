@@ -1,4 +1,4 @@
-import { request } from "../client.js"
+import { request, getBaseUrl, getApiKey } from "../client.js"
 import type { ChatRunPayload } from "@hermium/shared"
 
 export async function runChat(payload: ChatRunPayload) {
@@ -34,18 +34,6 @@ export interface StreamEvent {
 // ── Module-level active EventSources (persist across route changes) ──
 
 const activeSources = new Map<string, EventSource>()
-
-function getBaseUrl(): string {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("hermium_server_url") || "http://localhost:4000"
-    : ""
-}
-
-function getApiKey(): string {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("hermium_api_key") || ""
-    : ""
-}
 
 /**
  * Open an SSE stream for a chat run using EventSource.

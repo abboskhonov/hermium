@@ -19,8 +19,10 @@ import { proxyRoutes } from './hermes/proxy.js'
 import { memoryRoutes } from './hermes/memory.js'
 import { usageRoutes } from './hermes/usage.js'
 import { skillRoutes } from './hermes/skills.js'
+import { createStaticRoutes } from './static.js'
+import { webProxyMiddleware } from './web-proxy.js'
 
-export function createApp(): Hono {
+export function createApp(staticDir?: string): Hono {
   const app = new Hono()
 
   // Global middleware
@@ -51,8 +53,19 @@ export function createApp(): Hono {
   app.route('/', usageRoutes)
   app.route('/', skillRoutes)
 
+  // Static files (if configured)
+  if (staticDir) {
+    app.route('/', createStaticRoutes(staticDir))
+  }
+
   // Proxy catch-all (must be last)
   app.route('/', proxyRoutes)
+
+  // Web UI proxy — forwards all unmatched requests to the Nitro SSR server
+  // Only active when HERMIUM_WEB_URL is set (i.e. running via CLI)
+  if (process.env.HERMIUM_WEB_URL) {
+    app.use(webProxyMiddleware)
+  }
 
   // JSON 404 for anything that truly isn't matched
   app.notFound((c) => c.json({ error: { message: `Not Found: ${c.req.method} ${c.req.path}` } }, 404))

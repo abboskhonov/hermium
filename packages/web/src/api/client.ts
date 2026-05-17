@@ -1,11 +1,10 @@
 import type { ApiResponse } from "@hermium/shared"
 
-const DEFAULT_BASE_URL = "http://localhost:4000"
-
-function getBaseUrl(): string {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("hermium_server_url") || DEFAULT_BASE_URL
-    : ""
+export function getBaseUrl(): string {
+  if (typeof window === "undefined") return ""
+  // Always use same-origin in production — the API and web are served from the same server.
+  // Stored custom URL is ignored to prevent stale dev-mode values (e.g. :4000) from breaking the app.
+  return window.location.origin
 }
 
 export function getApiKey(): string {

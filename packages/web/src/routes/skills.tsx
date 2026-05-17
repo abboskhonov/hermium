@@ -20,6 +20,10 @@ import {
 } from "@tabler/icons-react"
 
 export const Route = createFileRoute("/skills")({
+  loader: async () => {
+    const data = await fetchSkills()
+    return data
+  },
   component: SkillsPage,
 })
 
@@ -38,8 +42,8 @@ function SourceDot({ source }: { source?: string }) {
 function SkillsPage() {
   const { state } = useSidebar()
   const isCollapsed = state === "collapsed"
-  const [data, setData] = useState<{ categories: SkillCategory[]; archived: SkillInfo[] } | null>(null)
-  const [loading, setLoading] = useState(true)
+  const data = Route.useLoaderData()
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState("")
   const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all")
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
@@ -53,20 +57,6 @@ function SkillsPage() {
   const [viewingFile, setViewingFile] = useState<string | null>(null)
   const [fileContent, setFileContent] = useState("")
   const [, setFileLoading] = useState(false)
-
-  const load = useCallback(async () => {
-    try {
-      const d = await fetchSkills()
-      setData(d)
-    } catch (err) {
-      console.error("Failed to load skills:", err)
-    }
-  }, [])
-
-  useEffect(() => {
-    setLoading(true)
-    load().finally(() => setLoading(false))
-  }, [load])
 
   // Load selected skill detail
   useEffect(() => {
@@ -192,8 +182,9 @@ function SkillsPage() {
   if (selected) {
     return (
       <div className="flex flex-col h-full">
-        <header className="flex items-center justify-between border-b px-4 py-3 shrink-0">
-          <div className="flex items-center gap-2 min-w-0">
+        <header className="flex items-center justify-between border-b px-4 py-3 shrink-0 relative">
+          {/* Left: back button */}
+          <div className="flex items-center gap-2 z-10">
             {isCollapsed && (
               <SidebarTrigger
                 className={cn(
@@ -205,32 +196,40 @@ function SkillsPage() {
               <IconArrowLeft className="size-3.5 mr-1" />
               Back
             </Button>
-            <span className="text-muted-foreground text-sm">{selected.category}</span>
-            <span className="text-muted-foreground">/</span>
+          </div>
+
+          {/* Center: skill name — absolutely centered */}
+          <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 max-w-[50%]">
+            <span className="text-muted-foreground text-sm truncate">{selected.category}</span>
+            <span className="text-muted-foreground shrink-0">/</span>
             <span className="text-sm font-medium truncate">{selected.skill}</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
-            onClick={() => {
-              setSkillLoading(true)
-              const skillPath = `${selected.category}/${selected.skill}/SKILL.md`
-              Promise.all([
-                fetchSkillContent(skillPath),
-                fetchSkillFiles(selected.category, selected.skill),
-              ])
-                .then(([content, files]) => {
-                  setSkillContent(content)
-                  setSkillFiles(files.filter((f) => !f.isDir))
-                })
-                .finally(() => setSkillLoading(false))
-            }}
-            disabled={skillLoading}
-          >
-            {skillLoading ? <IconLoader2 className="size-3 animate-spin" /> : <IconRefresh className="size-3" />}
-            Refresh
-          </Button>
+
+          {/* Right: refresh */}
+          <div className="z-10">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setSkillLoading(true)
+                const skillPath = `${selected.category}/${selected.skill}/SKILL.md`
+                Promise.all([
+                  fetchSkillContent(skillPath),
+                  fetchSkillFiles(selected.category, selected.skill),
+                ])
+                  .then(([content, files]) => {
+                    setSkillContent(content)
+                    setSkillFiles(files.filter((f) => !f.isDir))
+                  })
+                  .finally(() => setSkillLoading(false))
+              }}
+              disabled={skillLoading}
+            >
+              {skillLoading ? <IconLoader2 className="size-3 animate-spin" /> : <IconRefresh className="size-3" />}
+              Refresh
+            </Button>
+          </div>
         </header>
 
         <div className="flex-1 overflow-y-auto p-4">

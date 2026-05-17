@@ -1,0 +1,36 @@
+{
+  "name": "hermium",
+  "version": "0.3.6",
+  "description": "Hermium CLI — self-hosted AI chat dashboard for Hermes Agent",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abboskhonov/hermium.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20",
+    "bun": ">=1.2"
+  },
+  "keywords": [
+    "hermium",
+    "hermes",
+    "ai",
+    "chat",
+    "dashboard",
+    "self-hosted"
+  ],
+  "bin": {
+    "hermium": "bin/hermium.mjs"
+  },
+  "files": [
+    "bin",
+    "dist"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1"
+  }
+}

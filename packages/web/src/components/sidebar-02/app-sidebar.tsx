@@ -179,7 +179,7 @@ export function DashboardSidebar() {
 
       <SidebarContent>
         <div className="relative flex flex-col flex-1 min-h-0 gap-1 px-0.5 py-1">
-          <div className="flex flex-col gap-1 h-full justify-between">
+          <div className="flex flex-col gap-1 flex-1 min-h-0 justify-between">
             <div className="flex flex-col gap-1 flex-1 min-h-0">
               {/* New Chat */}
               <SidebarMenu>
@@ -266,10 +266,15 @@ export function DashboardSidebar() {
               {/* Nav routes */}
               <DashboardNavigation routes={dashboardRoutes} />
 
+              {/* Divider */}
+              {!isCollapsed && (
+                <div className="shrink-0 mx-2 my-1 h-px bg-sidebar-border/60" />
+              )}
+
               {/* Chats */}
               {!isCollapsed && (
-                <SidebarGroup className="px-0 flex flex-col min-h-0">
-                  <div className="group/search flex items-center justify-between px-0.5 pb-0.5 shrink-0">
+                <SidebarGroup className="px-0 flex flex-col min-h-0 flex-1">
+                  <div className="group/search flex items-center justify-between px-2 pb-1 shrink-0">
                     {isSearchOpen ? (
                       <div className="flex w-full items-center gap-1 min-w-0">
                         <IconSearch className="size-3.5 shrink-0 text-muted-foreground" />
@@ -294,7 +299,7 @@ export function DashboardSidebar() {
                       </div>
                     ) : (
                       <>
-                        <SidebarGroupLabel className="!text-[11px] !font-normal text-muted-foreground/60">
+                        <SidebarGroupLabel className="!text-[11px] !font-normal text-sidebar-foreground/80">
                           Chats
                         </SidebarGroupLabel>
                         <button

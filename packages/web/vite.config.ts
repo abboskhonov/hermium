@@ -6,12 +6,20 @@ import viteTsConfigPaths from "vite-tsconfig-paths"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
 
-const API_URL = "http://127.0.0.1:4000"
+const DEV_API_URL = "http://127.0.0.1:4000"
+const PROD_API_URL = process.env.HERMIUM_API_URL || "http://127.0.0.1:47474"
 
 export default defineConfig({
   plugins: [
     devtools(),
-    nitro(),
+    nitro({
+      routeRules: {
+        "/api/**": { proxy: PROD_API_URL + "/api/**" },
+        "/upload/**": { proxy: PROD_API_URL + "/upload/**" },
+        "/health": { proxy: PROD_API_URL + "/health" },
+        "/webhook": { proxy: PROD_API_URL + "/webhook" },
+      },
+    }),
     viteTsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
@@ -23,7 +31,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: API_URL,
+        target: DEV_API_URL,
         changeOrigin: true,
         configure: (proxy, options) => {
           proxy.on("error", (err, _req, res) => {
@@ -45,9 +53,9 @@ export default defineConfig({
           })
         },
       },
-      "/upload": { target: API_URL, changeOrigin: true },
-      "/health": { target: API_URL, changeOrigin: true },
-      "/webhook": { target: API_URL, changeOrigin: true },
+      "/upload": { target: DEV_API_URL, changeOrigin: true },
+      "/health": { target: DEV_API_URL, changeOrigin: true },
+      "/webhook": { target: DEV_API_URL, changeOrigin: true },
     },
   },
   build: {
@@ -58,12 +66,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("node_modules/@tanstack/react-router")) {
-            return "router"
-          }
-          if (id.includes("node_modules/@base-ui")) {
-            return "base-ui"
-          }
+          // Put all dependencies into a single vendor chunk to avoid
+          // circular chunk dependencies that break React hydration.
           if (id.includes("node_modules")) {
             return "vendor"
           }

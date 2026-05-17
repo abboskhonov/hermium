@@ -5,22 +5,35 @@ import type { Session, Message } from '@hermium/shared'
 
 export function listSessions(c: Context) {
   const db = getDb()
-  const rows = db.query('SELECT * FROM sessions ORDER BY updated_at DESC').all() as Array<Record<string, unknown>>
-  const sessions: Session[] = rows.map((r) => ({
-    id: String(r.id),
-    title: String(r.title),
-    source: r.source ? String(r.source) : undefined,
-    createdAt: Number(r.created_at),
-    updatedAt: Number(r.updated_at),
-    model: r.model ? String(r.model) : undefined,
-    provider: r.provider ? String(r.provider) : undefined,
-    messageCount: Number(r.message_count || 0),
-    inputTokens: Number(r.input_tokens || 0),
-    outputTokens: Number(r.output_tokens || 0),
-    endedAt: r.ended_at ? Number(r.ended_at) : null,
-    lastActiveAt: r.last_active_at ? Number(r.last_active_at) : undefined,
-    workspace: r.workspace ? String(r.workspace) : null,
-  }))
+  const rows = db.query(`
+    SELECT s.*,
+      (SELECT content FROM messages WHERE session_id = s.id AND role = 'user' ORDER BY timestamp LIMIT 1) as preview
+    FROM sessions s
+    ORDER BY s.updated_at DESC
+  `).all() as Array<Record<string, unknown>>
+  const sessions: Session[] = rows.map((r) => {
+    const rawTitle = String(r.title || '')
+    const preview = r.preview ? String(r.preview) : ''
+    let title = rawTitle
+    if (!title && preview) {
+      title = preview.slice(0, 40) + (preview.length > 40 ? '...' : '')
+    }
+    return {
+      id: String(r.id),
+      title,
+      source: r.source ? String(r.source) : undefined,
+      createdAt: Number(r.created_at),
+      updatedAt: Number(r.updated_at),
+      model: r.model ? String(r.model) : undefined,
+      provider: r.provider ? String(r.provider) : undefined,
+      messageCount: Number(r.message_count || 0),
+      inputTokens: Number(r.input_tokens || 0),
+      outputTokens: Number(r.output_tokens || 0),
+      endedAt: r.ended_at ? Number(r.ended_at) : null,
+      lastActiveAt: r.last_active_at ? Number(r.last_active_at) : undefined,
+      workspace: r.workspace ? String(r.workspace) : null,
+    }
+  })
   return c.json({ sessions })
 }
 
@@ -32,10 +45,18 @@ export function getSession(c: Context) {
 
   const messages = db.query('SELECT * FROM messages WHERE session_id = ? ORDER BY timestamp').all(id) as Array<Record<string, unknown>>
 
+  const rawTitle = String(row.title || '')
+  const firstUserMsg = messages.find((m) => String(m.role) === 'user')
+  const preview = firstUserMsg ? String(firstUserMsg.content) : ''
+  let title = rawTitle
+  if (!title && preview) {
+    title = preview.slice(0, 40) + (preview.length > 40 ? '...' : '')
+  }
+
   return c.json({
     session: {
       id: String(row.id),
-      title: String(row.title),
+      title,
       source: row.source ? String(row.source) : undefined,
       createdAt: Number(row.created_at),
       updatedAt: Number(row.updated_at),

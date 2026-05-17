@@ -1,8 +1,9 @@
 import type { Context } from 'hono'
-import { readdir, readFile } from 'fs/promises'
+import { readdir, readFile, stat } from 'fs/promises'
 import { join, resolve } from 'path'
 import { existsSync, readFileSync } from 'fs'
 import { homedir } from 'os'
+import { logger } from '../../lib/logger.js'
 
 function getHermesDir(): string {
   if (process.env.HERMES_HOME) return resolve(process.env.HERMES_HOME)
@@ -10,7 +11,11 @@ function getHermesDir(): string {
 }
 
 async function safeReadFile(path: string): Promise<string | null> {
-  try { return await readFile(path, 'utf-8') } catch { return null }
+  try {
+    const s = await stat(path)
+    if (!s.isFile()) return null
+    return await readFile(path, 'utf-8')
+  } catch { return null }
 }
 
 function extractDescription(md: string): string {
@@ -202,15 +207,32 @@ export async function listSkills(c: Context) {
 
 export async function readSkillFile(c: Context) {
   const hermesDir = getHermesDir()
-  const filePath = c.req.param('*') ?? ''
+  const urlPath = c.req.path
+  const prefix = '/api/hermes/skills/'
+  const filePath = urlPath.startsWith(prefix) ? urlPath.slice(prefix.length) : ''
+  logger.info('[skills] readSkillFile request', { filePath, urlPath, hermesDir })
+
   let realPath = filePath
   if (realPath.startsWith('misc/')) realPath = realPath.slice(5)
+
   const fullPath = resolve(join(hermesDir, 'skills', realPath))
-  if (!fullPath.startsWith(join(hermesDir, 'skills'))) {
-    return c.json({ error: 'Access denied' }, 403)
+  const skillsBase = join(hermesDir, 'skills')
+
+  logger.info('[skills] resolved path', { fullPath, skillsBase })
+
+  if (!fullPath.startsWith(skillsBase)) {
+    return c.json({ error: 'Access denied', path: fullPath }, 403)
   }
+
+  const fileExists = existsSync(fullPath)
+  if (!fileExists) {
+    return c.json({ error: 'File not found', path: fullPath }, 404)
+  }
+
   const content = await safeReadFile(fullPath)
-  if (content === null) return c.json({ error: 'File not found' }, 404)
+  if (content === null) {
+    return c.json({ error: 'File read failed', path: fullPath }, 500)
+  }
   return c.json({ content })
 }
 

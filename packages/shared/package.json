@@ -12,7 +12,8 @@
   "scripts": {
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
   },
   "devDependencies": {
     "typescript": "^5.9.3"

@@ -6,6 +6,7 @@ import {
   createSession,
   deleteSession as apiDeleteSession,
   saveMessage,
+  renameSession,
 } from "@/api/hermes/sessions"
 import { runChat, streamChatRun } from "@/api/hermes/chat"
 import { uploadFiles } from "@/api/hermes/files"
@@ -290,35 +291,40 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   updateSessionTitle(sessionId) {
-    set((s) => {
-      const session = s.sessions.find((sess) => sess.id === sessionId)
-      const hasRealTitle = !!session?.title && session.title !== "New Session"
-      if (!session || hasRealTitle) return s
-      const firstUser = s.messages.find((m) => m.role === "user")
-      if (!firstUser) return s
-      const raw = firstUser.content.trim()
-      let title = raw
-      if (raw.length > 40) {
-        const sentenceMatch = raw.slice(0, 60).match(/^[^.!?]+[.!?]/)
-        if (sentenceMatch) {
-          title = sentenceMatch[0].trim()
-        } else {
-          const slice = raw.slice(0, 40)
-          const lastSpace = slice.lastIndexOf(" ")
-          title = lastSpace > 20 ? slice.slice(0, lastSpace) : slice
-        }
+    const state = get()
+    const session = state.sessions.find((sess) => sess.id === sessionId)
+    const hasRealTitle = !!session?.title && session.title !== "New Session"
+    if (!session || hasRealTitle) return
+    const firstUser = state.messages.find((m) => m.role === "user")
+    if (!firstUser) return
+    const raw = firstUser.content.trim()
+    let title = raw
+    if (raw.length > 40) {
+      const sentenceMatch = raw.slice(0, 60).match(/^[^.!?]+[.!?]/)
+      if (sentenceMatch) {
+        title = sentenceMatch[0].trim()
+      } else {
+        const slice = raw.slice(0, 40)
+        const lastSpace = slice.lastIndexOf(" ")
+        title = lastSpace > 20 ? slice.slice(0, lastSpace) : slice
       }
-      title = title.replace(/[,:;\-]+$/, "").trim()
-      if (title.length < raw.length) title += "…"
-      title = title.charAt(0).toUpperCase() + title.slice(1)
-      return {
-        sessions: s.sessions.map((sess) =>
-          sess.id === sessionId
-            ? { ...sess, title, updatedAt: Date.now() }
-            : sess,
-        ),
-      }
+    }
+    title = title.replace(/[,:;\-]+$/, "").trim()
+    if (title.length < raw.length) title += "…"
+    title = title.charAt(0).toUpperCase() + title.slice(1)
+
+    // Persist auto-generated title to the backend so it survives reloads
+    renameSession(sessionId, title).catch((err) => {
+      console.error("[store] Failed to persist session title:", err)
     })
+
+    set((s) => ({
+      sessions: s.sessions.map((sess) =>
+        sess.id === sessionId
+          ? { ...sess, title, updatedAt: Date.now() }
+          : sess,
+      ),
+    }))
   },
 
   updateSession(id, patch) {

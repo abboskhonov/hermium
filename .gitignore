@@ -32,5 +32,11 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 
+# Packaged builds
+*.tgz
+
 # Auth tokens
 .token
+
+# Turbo
+.turbo

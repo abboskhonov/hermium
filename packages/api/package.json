@@ -8,7 +8,8 @@
     "build": "bun build src/index.ts --outdir ./dist --target bun",
     "start": "bun dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist .turbo"
   },
   "dependencies": {
     "hono": "^4.12.19",

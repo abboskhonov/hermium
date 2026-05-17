@@ -33,7 +33,8 @@ async function bootstrap() {
   logger.info('Database initialized')
 
   // Create app
-  const app = createApp()
+  const staticDir = process.env.WEB_STATIC_DIR
+  const app = createApp(staticDir)
 
   // Start server
   const server = Bun.serve({

@@ -1,23 +1,29 @@
 {
   "name": "hermium",
   "private": true,
+  "packageManager": "bun@1.3.3",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently \"bun run dev:web\" \"bun run dev:api\"",
-    "dev:web": "bun --cwd packages/web dev",
-    "dev:api": "AUTH_DISABLED=1 bun --cwd packages/api dev",
-    "build": "bun run build:shared && bun run build:api && bun run build:web",
-    "build:web": "bun --cwd packages/web build",
-    "build:api": "bun --cwd packages/api build",
-    "build:shared": "bun --cwd packages/shared build",
-    "start": "bun --cwd packages/api start",
-    "lint": "bun --cwd packages/web lint && bun --cwd packages/api lint",
-    "typecheck": "bun --cwd packages/web typecheck && bun --cwd packages/api typecheck"
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=web",
+    "dev:api": "AUTH_DISABLED=1 turbo run dev --filter=@hermium/api",
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=web",
+    "build:api": "turbo run build --filter=@hermium/api",
+    "build:shared": "turbo run build --filter=@hermium/shared",
+    "build:cli": "turbo run build --filter=hermium",
+    "start": "turbo run start --filter=@hermium/api",
+    "cli:start": "turbo run start --filter=hermium",
+    "cli:build": "turbo run build --filter=hermium",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf .turbo"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
+    "turbo": "^2.9.14",
     "typescript": "^5.9.3"
   }
 }
