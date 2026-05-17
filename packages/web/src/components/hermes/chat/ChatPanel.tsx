@@ -1,16 +1,15 @@
 import { useEffect } from "react"
 import { useChatStore } from "@/stores/chat"
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 import MessageList from "./MessageList"
 import ChatInputBlock from "./ChatInputBlock"
 
 export default function ChatPanel() {
   const { activeSessionId, isStreaming } = useChatStore()
   const syncFromDb = useChatStore((s) => s.syncFromDb)
-
-  useEffect(() => {
-    const state = useChatStore.getState()
-    console.log(`[ChatPanel] mount: activeSessionId=${state.activeSessionId}, isStreaming=${state.isStreaming}, activeStream=${state.activeStream?.runId || 'null'}, messages=${state.messages.length}`)
-  }, [])
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   // Poll DB while streaming as a safety net if SSE drops
   useEffect(() => {
@@ -25,6 +24,13 @@ export default function ChatPanel() {
     <div className="flex h-full flex-col ">
       <header className="flex items-center justify-between border-b px-4 py-3 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
+          {isCollapsed && (
+            <SidebarTrigger
+              className={cn(
+                "mr-1 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              )}
+            />
+          )}
           <h2 className="truncate font-medium">
             {activeSessionId
               ? `Chat ${activeSessionId.slice(0, 8)}`
