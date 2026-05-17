@@ -18,6 +18,7 @@ import { configRoutes } from './hermes/config.js'
 import { proxyRoutes } from './hermes/proxy.js'
 import { memoryRoutes } from './hermes/memory.js'
 import { usageRoutes } from './hermes/usage.js'
+import { skillRoutes } from './hermes/skills.js'
 
 export function createApp(): Hono {
   const app = new Hono()
@@ -48,6 +49,7 @@ export function createApp(): Hono {
   app.route('/', configRoutes)
   app.route('/', memoryRoutes)
   app.route('/', usageRoutes)
+  app.route('/', skillRoutes)
 
   // Proxy catch-all (must be last)
   app.route('/', proxyRoutes)

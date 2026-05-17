@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback } from "react"
 import { fetchMemory, saveMemory } from "@/api/hermes/memory"
 import type { MemoryData } from "@hermium/shared"
 import { Button } from "@/components/ui/button"
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
+import { cn } from "@/lib/utils"
 import { IconBrain, IconUser, IconSparkles, IconPencil, IconLoader2, IconRefresh } from "@tabler/icons-react"
 import MarkdownMessage from "@/components/hermes/chat/MarkdownMessage"
 
@@ -163,6 +165,8 @@ function MemoryPage() {
   const [data, setData] = useState<MemoryData | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
 
   const load = useCallback(async () => {
     try {
@@ -206,6 +210,13 @@ function MemoryPage() {
     <div className="flex flex-col h-full">
       <header className="flex items-center justify-between border-b px-4 py-3 shrink-0">
         <div className="flex items-center gap-2">
+          {isCollapsed && (
+            <SidebarTrigger
+              className={cn(
+                "mr-1 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              )}
+            />
+          )}
           <IconBrain className="size-5 text-muted-foreground" />
           <h2 className="text-sm font-medium">Memory</h2>
         </div>

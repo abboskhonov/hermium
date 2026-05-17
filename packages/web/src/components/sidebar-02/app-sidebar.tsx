@@ -29,6 +29,7 @@ import {
   IconX,
   IconBrain,
   IconChartBar,
+  IconWand,
 } from "@tabler/icons-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import type { Route } from "./nav-main";
@@ -212,6 +213,29 @@ export function DashboardSidebar() {
                   >
                     <IconBrain className="size-4" />
                     {!isCollapsed && <span>Memory</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+
+              {/* Skills */}
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Skills"
+                    render={
+                      <Link
+                        to="/skills"
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors",
+                          location.pathname === "/skills"
+                            ? "bg-sidebar-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-muted",
+                        )}
+                      />
+                    }
+                  >
+                    <IconWand className="size-4" />
+                    {!isCollapsed && <span>Skills</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

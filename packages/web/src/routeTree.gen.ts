@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UsageRouteImport } from './routes/usage'
+import { Route as SkillsRouteImport } from './routes/skills'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MemoryRouteImport } from './routes/memory'
 import { Route as IndexRouteImport } from './routes/index'
@@ -19,6 +20,11 @@ import { Route as ChatSessionIdRouteImport } from './routes/chat.$sessionId'
 const UsageRoute = UsageRouteImport.update({
   id: '/usage',
   path: '/usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SkillsRoute = SkillsRouteImport.update({
+  id: '/skills',
+  path: '/skills',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
   '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
   '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat': typeof ChatIndexRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/skills': typeof SkillsRoute
   '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -78,16 +87,25 @@ export interface FileRouteTypes {
     | '/'
     | '/memory'
     | '/settings'
+    | '/skills'
     | '/usage'
     | '/chat/$sessionId'
     | '/chat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/memory' | '/settings' | '/usage' | '/chat/$sessionId' | '/chat'
+  to:
+    | '/'
+    | '/memory'
+    | '/settings'
+    | '/skills'
+    | '/usage'
+    | '/chat/$sessionId'
+    | '/chat'
   id:
     | '__root__'
     | '/'
     | '/memory'
     | '/settings'
+    | '/skills'
     | '/usage'
     | '/chat/$sessionId'
     | '/chat/'
@@ -97,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MemoryRoute: typeof MemoryRoute
   SettingsRoute: typeof SettingsRoute
+  SkillsRoute: typeof SkillsRoute
   UsageRoute: typeof UsageRoute
   ChatSessionIdRoute: typeof ChatSessionIdRoute
   ChatIndexRoute: typeof ChatIndexRoute
@@ -109,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/usage'
       fullPath: '/usage'
       preLoaderRoute: typeof UsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/skills': {
+      id: '/skills'
+      path: '/skills'
+      fullPath: '/skills'
+      preLoaderRoute: typeof SkillsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -153,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MemoryRoute: MemoryRoute,
   SettingsRoute: SettingsRoute,
+  SkillsRoute: SkillsRoute,
   UsageRoute: UsageRoute,
   ChatSessionIdRoute: ChatSessionIdRoute,
   ChatIndexRoute: ChatIndexRoute,
