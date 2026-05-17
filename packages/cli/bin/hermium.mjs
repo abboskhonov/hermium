@@ -407,8 +407,12 @@ ${pc.bold('Commands:')}
   status     Show running status
   build      Build from source (requires repo)
   dev        Run in dev mode (requires repo)
+  update     Update Hermium to the latest version
   help       Show this help message
   version    Show version
+
+${pc.bold('Update:')}
+  hermium update    Stops servers, installs latest, restarts
 
 ${pc.bold('Options:')}
   --port <n>      API server port (default: 47474)
@@ -424,6 +428,65 @@ ${pc.bold('Examples:')}
 
 function cmdVersion() {
   console.log(CURRENT_VERSION)
+}
+
+async function cmdUpdate() {
+  console.log(pc.cyan(`  ⏳ Checking for updates...`))
+
+  let latest = null
+  try {
+    const res = await fetch('https://registry.npmjs.org/hermium/latest', { signal: AbortSignal.timeout(5000) })
+    if (res.ok) {
+      const data = await res.json()
+      latest = data.version
+    }
+  } catch {
+    console.log(pc.red(`  ✗ Failed to check registry. Are you online?`))
+    process.exit(1)
+  }
+
+  if (!latest) {
+    console.log(pc.red(`  ✗ Could not determine latest version.`))
+    process.exit(1)
+  }
+
+  if (latest === CURRENT_VERSION) {
+    console.log(pc.green(`  ✓ Hermium is already up to date (${CURRENT_VERSION})`))
+    return
+  }
+
+  console.log(pc.cyan(`  ⬆  Updating Hermium ${CURRENT_VERSION} → ${latest}`))
+
+  // Try to detect the package manager used to install hermium
+  const exe = process.argv[1] || ''
+  let pm = 'npm'
+  if (exe.includes('bun') || process.versions?.bun) pm = 'bun'
+
+  const wasRunning = !!getPids().apiPid
+  if (wasRunning) {
+    console.log(pc.yellow(`  ⊘ Stopping running servers before update...`))
+    cmdStop()
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000)
+  }
+
+  const installCmd = pm === 'bun'
+    ? `bun install -g hermium@${latest}`
+    : `npm install -g hermium@${latest}`
+
+  try {
+    execSync(installCmd, { stdio: 'inherit' })
+    console.log(pc.green(`  ✓ Updated to ${latest}`))
+    if (wasRunning) {
+      console.log(pc.cyan(`  ⏳ Restarting servers...`))
+      cmdStart()
+    } else {
+      console.log(`    Run "hermium start" to launch the new version.`)
+    }
+  } catch {
+    console.log(pc.red(`  ✗ Update failed. Try manually:`))
+    console.log(`    ${installCmd}`)
+    process.exit(1)
+  }
 }
 
 // ─── Entrypoint ─────────────────────────────────────────────────────────────
@@ -448,6 +511,9 @@ switch (command) {
     break
   case 'dev':
     cmdDev()
+    break
+  case 'update':
+    cmdUpdate()
     break
   case 'version':
   case '--version':

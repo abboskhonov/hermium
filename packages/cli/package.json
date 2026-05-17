@@ -1,6 +1,6 @@
 {
   "name": "hermium",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Hermium CLI — self-hosted AI chat dashboard for Hermes Agent",
   "repository": {
     "type": "git",
