@@ -99,7 +99,16 @@ export function streamChat(c: Context) {
         let payload = ''
         if (id) payload += `id: ${id}\n`
         payload += `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`
-        ctrl.enqueue(encoder.encode(payload))
+        try {
+          ctrl.enqueue(encoder.encode(payload))
+        } catch (err: any) {
+          // Client disconnected — controller closed by runtime
+          if (err?.message?.includes('Controller is already closed')) {
+            closed = true
+          } else {
+            throw err
+          }
+        }
       }
 
       const send = (event: string, data: Record<string, unknown>) => {
