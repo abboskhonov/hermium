@@ -83,24 +83,31 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 }
 
 function StatCards({ stats }: { stats: UsageStatsResponse }) {
-  const totalTokens = stats.total_input_tokens + stats.total_output_tokens
+  const billedTokens = stats.total_input_tokens + stats.total_output_tokens
+  const totalTokens = billedTokens + stats.total_cache_read_tokens
   const totalCache = stats.total_cache_read_tokens
-  const cacheRate = totalTokens + totalCache > 0
+  const cacheRate = stats.total_input_tokens + totalCache > 0
     ? ((totalCache / (stats.total_input_tokens + totalCache)) * 100).toFixed(1) + "%"
     : "--"
 
   const daysWithActivity = stats.daily_usage.filter((d) => d.sessions > 0).length
   const avgPerDay = daysWithActivity > 0 ? (stats.total_sessions / daysWithActivity).toFixed(1) : "0.0"
 
+  const tokenSub = [
+    `${formatTokens(stats.total_input_tokens)} input`,
+    `${formatTokens(stats.total_output_tokens)} output`,
+    totalCache > 0 && `${formatTokens(totalCache)} cache`,
+  ].filter(Boolean).join(" / ")
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
       <StatCard
         label="Total Tokens"
         value={formatTokens(totalTokens)}
-        sub={`${formatTokens(stats.total_input_tokens)} input / ${formatTokens(stats.total_output_tokens)} output`}
+        sub={tokenSub}
       />
       <StatCard label="Total Sessions" value={String(stats.total_sessions)} sub={`${avgPerDay} avg/day`} />
-      <StatCard label="Estimated Cost" value={formatCost(stats.total_cost ?? 0)} />
+      <StatCard label="Estimated Cost" value={formatCost(stats.total_cost ?? 0)} sub={`${formatTokens(billedTokens)} billed`} />
       <StatCard label="Cache Hit Rate" value={cacheRate} sub={totalCache > 0 ? `${formatTokens(totalCache)} tokens` : undefined} />
     </div>
   )

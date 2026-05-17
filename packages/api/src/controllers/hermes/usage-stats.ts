@@ -95,11 +95,12 @@ function queryWebUiDb(cutoff: number): MergedStats {
         COALESCE(SUM(input_tokens), 0) as input_tokens,
         COALESCE(SUM(output_tokens), 0) as output_tokens,
         COALESCE(SUM(cache_read_tokens), 0) as cache_read_tokens,
+        COALESCE(SUM(cache_write_tokens), 0) as cache_write_tokens,
         COUNT(DISTINCT session_id) as sessions
       FROM usage
       WHERE timestamp > ?
       GROUP BY date
-    `).all(cutoff) as Array<{ date: string; input_tokens: number; output_tokens: number; cache_read_tokens: number; sessions: number }>
+    `).all(cutoff) as Array<{ date: string; input_tokens: number; output_tokens: number; cache_read_tokens: number; cache_write_tokens: number; sessions: number }>
 
     const result: MergedStats = {
       input_tokens: totals.input_tokens,
@@ -120,6 +121,7 @@ function queryWebUiDb(cutoff: number): MergedStats {
         input_tokens: d.input_tokens,
         output_tokens: d.output_tokens,
         cache_read_tokens: d.cache_read_tokens,
+        cache_write_tokens: d.cache_write_tokens,
         sessions: d.sessions,
         errors: 0,
         cost: 0,
@@ -180,11 +182,12 @@ function queryHermesStateDb(dbPath: string, sinceSeconds: number): MergedStats {
         COALESCE(SUM(input_tokens), 0) as input_tokens,
         COALESCE(SUM(output_tokens), 0) as output_tokens,
         COALESCE(SUM(cache_read_tokens), 0) as cache_read_tokens,
+        COALESCE(SUM(cache_write_tokens), 0) as cache_write_tokens,
         COUNT(*) as sessions
       FROM sessions
       WHERE started_at > ?
       GROUP BY date
-    `).all(sinceSeconds) as Array<{ date: string; input_tokens: number; output_tokens: number; cache_read_tokens: number; sessions: number }>
+    `).all(sinceSeconds) as Array<{ date: string; input_tokens: number; output_tokens: number; cache_read_tokens: number; cache_write_tokens: number; sessions: number }>
 
     db.close()
 
@@ -207,6 +210,7 @@ function queryHermesStateDb(dbPath: string, sinceSeconds: number): MergedStats {
         input_tokens: d.input_tokens,
         output_tokens: d.output_tokens,
         cache_read_tokens: d.cache_read_tokens,
+        cache_write_tokens: d.cache_write_tokens,
         sessions: d.sessions,
         errors: 0,
         cost: 0,
@@ -258,6 +262,7 @@ function mergeStats(a: MergedStats, b: MergedStats): MergedStats {
       existing.input_tokens += stats.input_tokens
       existing.output_tokens += stats.output_tokens
       existing.cache_read_tokens += stats.cache_read_tokens
+      existing.cache_write_tokens += stats.cache_write_tokens
       existing.sessions += stats.sessions
     } else {
       merged.by_day.set(date, { ...stats })
