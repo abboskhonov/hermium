@@ -14,9 +14,11 @@
     "build:api": "turbo run build --filter=@hermium/api",
     "build:shared": "turbo run build --filter=@hermium/shared",
     "build:cli": "turbo run build --filter=hermium",
+    "build:marketing": "turbo run build --filter=@hermium/marketing",
     "start": "turbo run start --filter=@hermium/api",
     "cli:start": "turbo run start --filter=hermium",
     "cli:build": "turbo run build --filter=hermium",
+    "dev:marketing": "turbo run dev --filter=@hermium/marketing",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean && rm -rf .turbo"
