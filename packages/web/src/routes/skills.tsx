@@ -4,6 +4,7 @@ import { fetchSkills, fetchSkillContent, fetchSkillFiles, toggleSkill, type Skil
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import MarkdownMessage from "@/components/hermes/chat/MarkdownMessage"
 import {
@@ -35,6 +36,8 @@ function SourceDot({ source }: { source?: string }) {
 }
 
 function SkillsPage() {
+  const { state } = useSidebar()
+  const isCollapsed = state === "collapsed"
   const [data, setData] = useState<{ categories: SkillCategory[]; archived: SkillInfo[] } | null>(null)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -191,6 +194,13 @@ function SkillsPage() {
       <div className="flex flex-col h-full">
         <header className="flex items-center justify-between border-b px-4 py-3 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
+            {isCollapsed && (
+              <SidebarTrigger
+                className={cn(
+                  "mr-1 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+                )}
+              />
+            )}
             <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground" onClick={() => setSelected(null)}>
               <IconArrowLeft className="size-3.5 mr-1" />
               Back
@@ -272,6 +282,13 @@ function SkillsPage() {
       {/* Sidebar list */}
       <div className="w-80 border-r flex flex-col h-full shrink-0">
         <header className="flex items-center gap-2 border-b px-3 py-3 shrink-0">
+          {isCollapsed && (
+            <SidebarTrigger
+              className={cn(
+                "mr-1 -ml-1 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors shrink-0"
+              )}
+            />
+          )}
           <IconWand className="size-5 text-muted-foreground" />
           <h2 className="text-sm font-medium">Skills</h2>
           <Button
