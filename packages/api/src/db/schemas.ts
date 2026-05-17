@@ -142,6 +142,7 @@ export function initAllHermesTables(): void {
   try { db.exec('ALTER TABLE messages ADD COLUMN reasoning_started_at INTEGER') } catch { /* already exists */ }
   try { db.exec('ALTER TABLE messages ADD COLUMN reasoning_ended_at INTEGER') } catch { /* already exists */ }
   try { db.exec('ALTER TABLE messages ADD COLUMN tool_calls TEXT') } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE messages ADD COLUMN attachments TEXT') } catch { /* already exists */ }
 
   // Indexes
   db.exec('CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, timestamp)')

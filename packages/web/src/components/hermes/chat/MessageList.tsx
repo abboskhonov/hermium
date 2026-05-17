@@ -5,6 +5,7 @@ import {
   IconCheck,
   IconChevronRight,
   IconLoader2,
+  IconFile,
 } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 import MarkdownMessage from "./MarkdownMessage"
@@ -373,9 +374,43 @@ export default function MessageList() {
 
         // User messages
         if (isUser) {
+          const hasAttachments = !!msg.attachments?.length
           return (
             <div key={msg.id} className="flex px-4 py-2 justify-end">
-              <div className="flex min-w-0 flex-col max-w-[80%] items-end gap-0.5">
+              <div className="flex min-w-0 flex-col max-w-[80%] items-end gap-1.5">
+                {hasAttachments && (
+                  <div className="flex flex-wrap justify-end gap-1.5">
+                    {msg.attachments!.map((att) => {
+                      const isImage = att.type.startsWith('image/')
+                      return isImage ? (
+                        <a
+                          key={att.id}
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block rounded-xl overflow-hidden border border-border/50 hover:border-border transition-colors"
+                        >
+                          <img
+                            src={att.url}
+                            alt={att.name}
+                            className="max-h-[200px] max-w-[260px] object-cover"
+                          />
+                        </a>
+                      ) : (
+                        <a
+                          key={att.id}
+                          href={att.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 rounded-lg border bg-card px-2.5 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+                        >
+                          <IconFile className="size-3.5 text-muted-foreground shrink-0" />
+                          <span className="truncate max-w-[180px]">{att.name}</span>
+                        </a>
+                      )
+                    })}
+                  </div>
+                )}
                 <div className="rounded-2xl px-4 py-2.5 text-sm leading-relaxed bg-primary text-primary-foreground">
                   <div className="whitespace-pre-wrap">{msg.content}</div>
                 </div>

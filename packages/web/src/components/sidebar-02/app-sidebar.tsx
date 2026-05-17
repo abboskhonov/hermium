@@ -16,7 +16,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   IconCirclePlus,
-  IconMessage,
   IconSettings,
   IconSun,
   IconMoon,
@@ -69,6 +68,7 @@ export function DashboardSidebar() {
   const updateStoreSession = useChatStore((s) => s.updateSession);
 
   const handleNewChat = () => {
+    useChatStore.setState({ activeSessionId: null, messages: [], isStreaming: false, activeStream: null });
     navigate({ to: "/" });
   };
 
@@ -163,7 +163,7 @@ export function DashboardSidebar() {
   };
 
   return (
-    <Sidebar variant="inset" collapsible="icon">
+    <Sidebar variant="inset" collapsible="offcanvas">
       <SidebarHeader className="flex flex-row items-center justify-between px-2 py-3">
         <Link to="/" className="flex items-center gap-2.5">
           <Logo />
@@ -339,57 +339,24 @@ export function DashboardSidebar() {
                 </SidebarGroup>
               )}
 
-              {/* Collapsed: icon-only sessions */}
-              {isCollapsed && (
-                <SidebarMenu>
-                  {sessions.slice(0, 6).map((s) => (
-                    <SidebarMenuItem key={s.id}>
-                      <SidebarMenuButton
-                        tooltip={s.title || `Chat ${s.id.slice(0, 6)}`}
-                        render={
-                          <Link
-                            to="/chat/$sessionId"
-                            params={{ sessionId: s.id }}
-                            className={cn(
-                              "flex items-center justify-center rounded-lg transition-colors",
-                              isOnChatRoute && s.id === activeSessionId
-                                ? "bg-sidebar-muted text-foreground"
-                                : "text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
-                            )}
-                          />
-                        }
-                      >
-                        <IconMessage className="size-4" />
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              )}
+
             </div>
 
             {/* Footer */}
             <div className="shrink-0 space-y-1">
-              <div className={cn("flex items-center", isCollapsed ? "flex-col gap-1" : "flex-row gap-1")}>
+              <div className="flex items-center flex-row gap-1">
                 <Link
                   to="/settings"
-                  className={cn(
-                    "flex items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground transition-colors",
-                    isCollapsed ? "justify-center p-1.5 w-full" : "flex-1 px-2 py-1",
-                  )}
+                  className="flex items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-sidebar-muted hover:text-foreground transition-colors flex-1 px-2 py-1"
                   aria-label="Settings"
-                  title={isCollapsed ? "Settings" : undefined}
                 >
                   <IconSettings className="size-3.5 shrink-0" />
-                  {!isCollapsed && <span>Settings</span>}
+                  <span>Settings</span>
                 </Link>
                 <button
                   onClick={handleToggleTheme}
-                  className={cn(
-                    "flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-muted hover:text-foreground transition-colors",
-                    isCollapsed ? "p-1.5 w-full" : "p-1.5",
-                  )}
+                  className="flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-muted hover:text-foreground transition-colors p-1.5"
                   aria-label="Toggle theme"
-                  title={isCollapsed ? (resolvedTheme === "dark" ? "Light mode" : "Dark mode") : undefined}
                 >
                   <IconSun className={cn("size-3.5", resolvedTheme === "dark" && "hidden")} />
                   <IconMoon className={cn("size-3.5", resolvedTheme === "light" && "hidden")} />
@@ -453,7 +420,7 @@ function SessionItem({
           <>
             <SidebarMenuButton
               isActive={isActive}
-              className="px-2 py-1 pr-8 text-xs font-medium text-muted-foreground hover:text-foreground data-[active=true]:bg-sidebar-muted data-[active=true]:text-foreground"
+              className="px-2 py-0.5 pr-8 text-xs font-medium text-muted-foreground hover:text-foreground data-[active=true]:bg-sidebar-muted data-[active=true]:text-foreground"
               onDoubleClick={onStartRename}
               render={
                 <Link

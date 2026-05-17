@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import type { Session, Message } from "@hermium/shared"
+import type { Session, Message, Attachment, ContentBlock } from "@hermium/shared"
 import {
   fetchSessions,
   fetchSession,
@@ -8,6 +8,7 @@ import {
   saveMessage,
 } from "@/api/hermes/sessions"
 import { runChat, streamChatRun } from "@/api/hermes/chat"
+import { uploadFiles } from "@/api/hermes/files"
 
 const ACTIVE_SESSION_KEY = "hermium_active_session_id"
 const PINNED_SESSIONS_KEY = "hermium_pinned_sessions"
@@ -53,7 +54,7 @@ interface ChatState {
   togglePin: (sessionId: string) => void
 
   // Stream lifecycle
-  sendMessage: (text: string, model?: string) => Promise<void>
+  sendMessage: (text: string, model?: string, attachments?: { id: string; name: string; type: string; size: number; url: string; file: File }[]) => Promise<void>
   abortStream: () => void
   syncFromDb: (sessionId: string) => Promise<void>
 }
@@ -341,7 +342,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   // ── Stream lifecycle ──────────────────────────────────────────────────
 
-  async sendMessage(text, _model) {
+  async sendMessage(text, _model, rawAttachments?: { id: string; name: string; type: string; size: number; url: string; file: File }[]) {
     const state = get()
     console.log(`[store] sendMessage. isStreaming=${state.isStreaming}, sessionId=${state.activeSessionId}`)
     if (state.isStreaming) return
@@ -352,11 +353,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
     if (!sessionId) return
 
+    // Upload files if any
+    let uploadedFiles: { name: string; path: string }[] = []
+    let attachments: Attachment[] | undefined
+    if (rawAttachments && rawAttachments.length > 0) {
+      const files = rawAttachments.map((a) => a.file)
+      uploadedFiles = await uploadFiles(files)
+      attachments = rawAttachments.map((att, i) => {
+        const up = uploadedFiles[i]
+        return {
+          id: att.id,
+          name: att.name,
+          type: att.type,
+          size: att.size,
+          url: `/api/hermes/download?path=${encodeURIComponent(up.path)}&name=${encodeURIComponent(up.name)}`,
+        }
+      })
+    }
+
     const userMsg: Message = {
       id: uid(),
       role: "user",
       content: text,
       timestamp: Date.now(),
+      attachments,
     }
 
     await get().saveAndAppendMessage(sessionId, userMsg)
@@ -364,9 +384,30 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     set({ isStreaming: true })
 
+    // Build input for gateway
+    let input: string | ContentBlock[]
+    if (attachments && attachments.length > 0) {
+      const blocks: ContentBlock[] = []
+      if (text.trim()) {
+        blocks.push({ type: 'text', text: text.trim() })
+      }
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        const up = uploadedFiles[i]
+        const att = rawAttachments![i]
+        if (att.type.startsWith('image/')) {
+          blocks.push({ type: 'image', name: up.name, path: up.path, media_type: att.type })
+        } else {
+          blocks.push({ type: 'file', name: up.name, path: up.path, media_type: att.type })
+        }
+      }
+      input = blocks
+    } else {
+      input = text.trim()
+    }
+
     try {
       const { run_id } = await runChat({
-        input: text,
+        input,
         session_id: sessionId,
       })
       console.log(`[store] runChat returned run_id=${run_id}`)

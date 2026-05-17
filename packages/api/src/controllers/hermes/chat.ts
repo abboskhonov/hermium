@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import { logger } from '../../lib/logger.js'
-import type { ChatRunPayload } from '@hermium/shared'
+import type { ChatRunPayload, ContentBlock } from '@hermium/shared'
 import {
   createGatewayRun,
   streamGatewayRun,
@@ -56,8 +56,14 @@ export async function runChat(c: Context) {
   const body = await c.req.json<ChatRunPayload>()
   const profile = c.req.header('x-hermes-profile') || 'default'
 
+  // Ensure input is passed correctly to gateway
+  const payload: ChatRunPayload = {
+    ...body,
+    input: body.input,
+  }
+
   try {
-    const { runId } = await createGatewayRun(body, profile)
+    const { runId } = await createGatewayRun(payload, profile)
     return c.json({ run_id: runId, status: 'queued' })
   } catch (err: any) {
     const msg = err.message || String(err)

@@ -60,6 +60,7 @@ export function getSession(c: Context) {
         role: String(m.role) as Message['role'],
         content: String(m.content),
         timestamp: Number(m.timestamp),
+        attachments: m.attachments ? JSON.parse(String(m.attachments)) : undefined,
         toolName: m.tool_name ? String(m.tool_name) : undefined,
         toolCallId: m.tool_call_id ? String(m.tool_call_id) : undefined,
         toolArgs: m.tool_args ? String(m.tool_args) : undefined,
@@ -136,8 +137,8 @@ export async function addMessage(c: Context) {
     `INSERT OR REPLACE INTO messages (
       id, session_id, role, content, timestamp,
       tool_name, tool_call_id, tool_args, tool_result, tool_status, tool_duration,
-      is_streaming, reasoning, reasoning_started_at, reasoning_ended_at, tool_calls, queued
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      is_streaming, reasoning, reasoning_started_at, reasoning_ended_at, tool_calls, queued, attachments
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       body.id,
       sessionId,
@@ -156,6 +157,7 @@ export async function addMessage(c: Context) {
       body.reasoningEndedAt ?? null,
       body.toolCalls ? JSON.stringify(body.toolCalls) : null,
       body.queued ? 1 : 0,
+      body.attachments ? JSON.stringify(body.attachments) : null,
     ]
   )
 

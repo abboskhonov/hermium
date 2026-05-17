@@ -25,11 +25,25 @@ export interface ToolCall {
   status: 'running' | 'done' | 'error'
 }
 
+export interface Attachment {
+  id: string
+  name: string
+  type: string
+  size: number
+  url: string
+}
+
+export type ContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'image'; name: string; path: string; media_type: string }
+  | { type: 'file'; name: string; path: string; media_type?: string }
+
 export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system' | 'tool' | 'command'
   content: string
   timestamp: number
+  attachments?: Attachment[]
   toolName?: string
   toolCallId?: string
   toolArgs?: string
@@ -95,7 +109,7 @@ export interface Job {
 }
 
 export interface ChatRunPayload {
-  input: string
+  input: string | ContentBlock[]
   session_id?: string
   model?: string
   instructions?: string
