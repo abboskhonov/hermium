@@ -48,6 +48,15 @@ function cacheHitRate(input: number, cacheRead: number): string {
   return ((cacheRead / total) * 100).toFixed(1) + "%"
 }
 
+type Period = { label: string; days: number }
+
+const PERIODS: Period[] = [
+  { label: "Today", days: 1 },
+  { label: "7 Days", days: 7 },
+  { label: "30 Days", days: 30 },
+  { label: "All Time", days: 0 },
+]
+
 function useUsageStats(days = 30) {
   const [stats, setStats] = useState<UsageStatsResponse | null>(null)
   const [loading, setLoading] = useState(false)
@@ -256,15 +265,44 @@ function ModelBreakdown({ stats }: { stats: UsageStatsResponse }) {
   )
 }
 
+function PeriodTabs({ active, onChange }: { active: number; onChange: (days: number) => void }) {
+  return (
+    <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+      {PERIODS.map((p) => (
+        <button
+          key={p.label}
+          onClick={() => onChange(p.days)}
+          className={
+            "px-3 py-1 text-xs font-medium rounded-md transition-colors " +
+            (active === p.days
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground")
+          }
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function UsagePage() {
-  const { stats, loading } = useUsageStats(30)
+  const [days, setDays] = useState(30)
+  const { stats, loading } = useUsageStats(days)
+
+  const periodLabel = PERIODS.find((p) => p.days === days)?.label ?? "Custom"
 
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-6">
       <div className="mx-auto max-w-5xl">
-        <header className="mb-5">
-          <h1 className="text-lg font-semibold">Usage</h1>
-          <p className="text-sm text-muted-foreground">Token consumption and cost estimates over the last 30 days.</p>
+        <header className="mb-5 flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h1 className="text-lg font-semibold">Usage</h1>
+            <p className="text-sm text-muted-foreground">
+              Token consumption and cost estimates{days > 0 ? ` over the last ${periodLabel.toLowerCase()}` : " (all time)"}.
+            </p>
+          </div>
+          <PeriodTabs active={days} onChange={setDays} />
         </header>
 
         {loading && (
@@ -276,7 +314,7 @@ function UsagePage() {
         )}
 
         {!loading && stats && stats.total_sessions === 0 && (
-          <div className="text-sm text-muted-foreground py-8">No usage data yet.</div>
+          <div className="text-sm text-muted-foreground py-8">No usage data for this period.</div>
         )}
 
         {!loading && stats && stats.total_sessions > 0 && (

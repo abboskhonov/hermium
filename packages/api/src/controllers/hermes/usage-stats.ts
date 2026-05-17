@@ -269,9 +269,12 @@ function mergeStats(a: MergedStats, b: MergedStats): MergedStats {
 
 export async function getUsageStats(c: Context) {
   const rawDays = parseInt(c.req.query('days') || '30', 10)
-  const days = Number.isFinite(rawDays) && rawDays > 0 ? Math.min(rawDays, 365) : 30
-  const cutoffMs = Date.now() - days * 24 * 60 * 60 * 1000
-  const cutoffSeconds = Math.floor(cutoffMs / 1000)
+  const allTime = rawDays === 0
+  const days = allTime
+    ? 0
+    : (Number.isFinite(rawDays) && rawDays > 0 ? Math.min(rawDays, 365) : 30)
+  const cutoffMs = allTime ? 0 : Date.now() - days * 24 * 60 * 60 * 1000
+  const cutoffSeconds = allTime ? 0 : Math.floor(cutoffMs / 1000)
 
   // Query our own database
   const webUiStats = queryWebUiDb(cutoffMs)
@@ -283,14 +286,16 @@ export async function getUsageStats(c: Context) {
   // Merge
   const merged = hermesStats ? mergeStats(webUiStats, hermesStats) : webUiStats
 
-  // Fill missing days with zeros
+  // Fill missing days with zeros (skip for all-time to avoid 1000s of empty rows)
   const dayMap = new Map<string, UsageStatsDailyRow>()
-  const now = new Date()
-  for (let i = days - 1; i >= 0; i--) {
-    const d = new Date(now)
-    d.setDate(d.getDate() - i)
-    const key = d.toISOString().slice(0, 10)
-    dayMap.set(key, { date: key, input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, sessions: 0, errors: 0, cost: 0 })
+  if (!allTime) {
+    const now = new Date()
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - i)
+      const key = d.toISOString().slice(0, 10)
+      dayMap.set(key, { date: key, input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, sessions: 0, errors: 0, cost: 0 })
+    }
   }
   for (const d of merged.by_day.values()) {
     const existing = dayMap.get(d.date)
@@ -299,8 +304,13 @@ export async function getUsageStats(c: Context) {
       existing.output_tokens = d.output_tokens
       existing.cache_read_tokens = d.cache_read_tokens
       existing.sessions = d.sessions
+    } else if (allTime) {
+      dayMap.set(d.date, { ...d })
     }
   }
+
+  // Sort days ascending
+  const dailyUsage = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date))
 
   // Sort models by total tokens desc
   const modelUsage = [...merged.by_model.values()].sort(
@@ -315,6 +325,6 @@ export async function getUsageStats(c: Context) {
     total_sessions: merged.sessions,
     period_days: days,
     model_usage: modelUsage,
-    daily_usage: [...dayMap.values()],
+    daily_usage: dailyUsage,
   })
 }
