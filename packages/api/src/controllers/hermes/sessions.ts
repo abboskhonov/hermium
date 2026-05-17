@@ -48,21 +48,32 @@ export function getSession(c: Context) {
       lastActiveAt: row.last_active_at ? Number(row.last_active_at) : undefined,
       workspace: row.workspace ? String(row.workspace) : null,
     },
-    messages: messages.map((m) => ({
-      id: String(m.id),
-      role: String(m.role) as Message['role'],
-      content: String(m.content),
-      timestamp: Number(m.timestamp),
-      toolName: m.tool_name ? String(m.tool_name) : undefined,
-      toolCallId: m.tool_call_id ? String(m.tool_call_id) : undefined,
-      toolArgs: m.tool_args ? String(m.tool_args) : undefined,
-      toolResult: m.tool_result ? String(m.tool_result) : undefined,
-      toolStatus: m.tool_status ? String(m.tool_status) as 'running' | 'done' | 'error' : undefined,
-      toolDuration: m.tool_duration ? Number(m.tool_duration) : undefined,
-      isStreaming: Boolean(m.is_streaming),
-      reasoning: m.reasoning ? String(m.reasoning) : undefined,
-      queued: Boolean(m.queued),
-    })),
+    messages: messages.map((m) => {
+      let toolCalls: import('@hermium/shared').ToolCall[] | undefined
+      if (m.tool_calls) {
+        try {
+          toolCalls = JSON.parse(String(m.tool_calls))
+        } catch { /* skip */ }
+      }
+      return {
+        id: String(m.id),
+        role: String(m.role) as Message['role'],
+        content: String(m.content),
+        timestamp: Number(m.timestamp),
+        toolName: m.tool_name ? String(m.tool_name) : undefined,
+        toolCallId: m.tool_call_id ? String(m.tool_call_id) : undefined,
+        toolArgs: m.tool_args ? String(m.tool_args) : undefined,
+        toolResult: m.tool_result ? String(m.tool_result) : undefined,
+        toolStatus: m.tool_status ? String(m.tool_status) as 'running' | 'done' | 'error' : undefined,
+        toolDuration: m.tool_duration ? Number(m.tool_duration) : undefined,
+        isStreaming: Boolean(m.is_streaming),
+        reasoning: m.reasoning ? String(m.reasoning) : undefined,
+        reasoningStartedAt: m.reasoning_started_at ? Number(m.reasoning_started_at) : undefined,
+        reasoningEndedAt: m.reasoning_ended_at ? Number(m.reasoning_ended_at) : undefined,
+        toolCalls,
+        queued: Boolean(m.queued),
+      }
+    }),
   })
 }
 
@@ -71,7 +82,7 @@ export async function createSession(c: Context) {
   const db = getDb()
   const id = body.id || uid()
   const now = Date.now()
-  const title = body.title || 'New Session'
+  const title = body.title ?? ''
   db.run(
     'INSERT INTO sessions (id, title, source, created_at, updated_at, model) VALUES (?, ?, ?, ?, ?, ?)',
     [id, title, body.source ?? null, now, now, body.model ?? null]
@@ -125,8 +136,8 @@ export async function addMessage(c: Context) {
     `INSERT OR REPLACE INTO messages (
       id, session_id, role, content, timestamp,
       tool_name, tool_call_id, tool_args, tool_result, tool_status, tool_duration,
-      is_streaming, reasoning, queued
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      is_streaming, reasoning, reasoning_started_at, reasoning_ended_at, tool_calls, queued
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       body.id,
       sessionId,
@@ -141,6 +152,9 @@ export async function addMessage(c: Context) {
       body.toolDuration ?? null,
       body.isStreaming ? 1 : 0,
       body.reasoning ?? null,
+      body.reasoningStartedAt ?? null,
+      body.reasoningEndedAt ?? null,
+      body.toolCalls ? JSON.stringify(body.toolCalls) : null,
       body.queued ? 1 : 0,
     ]
   )

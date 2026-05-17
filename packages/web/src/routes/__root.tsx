@@ -6,6 +6,22 @@ import { DashboardLayout } from "@/components/sidebar-02"
 
 import appCss from "../styles.css?url"
 
+const themeScript = `
+  (function() {
+    try {
+      var theme = localStorage.getItem('hermium-theme') || 'system';
+      var resolved = theme === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : theme;
+      if (resolved === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (e) {}
+  })();
+`
+
 export const Route = createRootRoute({
   head: () => ({
     meta: [
@@ -14,6 +30,7 @@ export const Route = createRootRoute({
       { title: "Hermium" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
+    scripts: [{ type: "text/javascript", children: themeScript }],
   }),
   notFoundComponent: () => (
     <main className="container mx-auto p-4 pt-16">
@@ -26,7 +43,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

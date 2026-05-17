@@ -4,11 +4,22 @@ import MessageList from "./MessageList"
 import ChatInputBlock from "./ChatInputBlock"
 
 export default function ChatPanel() {
-  const { activeSessionId, isStreaming, loadSessions } = useChatStore()
+  const { activeSessionId, isStreaming } = useChatStore()
+  const syncFromDb = useChatStore((s) => s.syncFromDb)
 
   useEffect(() => {
-    loadSessions()
-  }, [loadSessions])
+    const state = useChatStore.getState()
+    console.log(`[ChatPanel] mount: activeSessionId=${state.activeSessionId}, isStreaming=${state.isStreaming}, activeStream=${state.activeStream?.runId || 'null'}, messages=${state.messages.length}`)
+  }, [])
+
+  // Poll DB while streaming as a safety net if SSE drops
+  useEffect(() => {
+    if (!activeSessionId || !isStreaming) return
+    const interval = setInterval(() => {
+      syncFromDb(activeSessionId)
+    }, 2000)
+    return () => clearInterval(interval)
+  }, [activeSessionId, isStreaming, syncFromDb])
 
   return (
     <div className="flex h-full flex-col ">
@@ -26,12 +37,16 @@ export default function ChatPanel() {
       </header>
 
       <div className="flex-1 min-h-0 overflow-y-auto">
-        <MessageList />
+        <div className="mx-auto max-w-3xl">
+          <MessageList />
+        </div>
       </div>
 
-    
-        <ChatInputBlock />
-   
+      <div className="shrink-0 bg-background px-4 py-3">
+        <div className="mx-auto max-w-3xl">
+          <ChatInputBlock />
+        </div>
+      </div>
     </div>
   )
 }

@@ -5,14 +5,14 @@ import { getDb } from '../db/index.js'
 import type { ChatRunPayload } from '@hermium/shared'
 
 // In-memory run → session mapping (ephemeral, same as hermes-web-ui)
-const runSessionMap = new Map<string, string>()
+const runSessionMap = new Map<string, { sessionId: string; model?: string; profile?: string }>()
 
-export function setRunSession(runId: string, sessionId: string): void {
-  runSessionMap.set(runId, sessionId)
+export function setRunSession(runId: string, sessionId: string, model?: string, profile?: string): void {
+  runSessionMap.set(runId, { sessionId, model, profile })
   setTimeout(() => runSessionMap.delete(runId), 30 * 60 * 1000)
 }
 
-export function getSessionForRun(runId: string): string | undefined {
+export function getSessionForRun(runId: string): { sessionId: string; model?: string; profile?: string } | undefined {
   return runSessionMap.get(runId)
 }
 
@@ -105,7 +105,7 @@ export async function createGatewayRun(
   }
 
   if (payload.session_id) {
-    setRunSession(runId, payload.session_id)
+    setRunSession(runId, payload.session_id, payload.model, profile)
   }
 
   logger.info('[gateway-chat] run created', { run_id: runId })
@@ -152,6 +152,42 @@ function transformGatewayEvent(
 
     case 'response.output_text.done':
       return null
+
+    case 'response.reasoning_text.delta':
+    case 'reasoning.delta': {
+      const delta = (gatewayData.delta as string) || (gatewayData.text as string) || ''
+      if (!delta) return null
+      return {
+        event: 'reasoning.delta',
+        data: {
+          event: 'reasoning.delta',
+          run_id: runId,
+          response_id: runId,
+          delta,
+        },
+      }
+    }
+
+    case 'response.reasoning_item.done':
+    case 'reasoning.available':
+      return {
+        event: 'reasoning.available',
+        data: { event: 'reasoning.available', run_id: runId, ...gatewayData },
+      }
+
+    case 'response.function_call_arguments.delta':
+    case 'tool.started':
+      return {
+        event: 'tool.started',
+        data: { event: 'tool.started', run_id: runId, ...gatewayData },
+      }
+
+    case 'response.function_call_arguments.done':
+    case 'tool.completed':
+      return {
+        event: 'tool.completed',
+        data: { event: 'tool.completed', run_id: runId, ...gatewayData },
+      }
 
     case 'run.completed': {
       const usage = (gatewayData.usage as Record<string, number>) || {}

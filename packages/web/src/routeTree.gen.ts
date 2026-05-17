@@ -9,14 +9,26 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UsageRouteImport } from './routes/usage'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as MemoryRouteImport } from './routes/memory'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatSessionIdRouteImport } from './routes/chat.$sessionId'
 
+const UsageRoute = UsageRouteImport.update({
+  id: '/usage',
+  path: '/usage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemoryRoute = MemoryRouteImport.update({
+  id: '/memory',
+  path: '/memory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,45 +49,80 @@ const ChatSessionIdRoute = ChatSessionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat/': typeof ChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat': typeof ChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/memory': typeof MemoryRoute
   '/settings': typeof SettingsRoute
+  '/usage': typeof UsageRoute
   '/chat/$sessionId': typeof ChatSessionIdRoute
   '/chat/': typeof ChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/chat/$sessionId' | '/chat/'
+  fullPaths:
+    | '/'
+    | '/memory'
+    | '/settings'
+    | '/usage'
+    | '/chat/$sessionId'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/chat/$sessionId' | '/chat'
-  id: '__root__' | '/' | '/settings' | '/chat/$sessionId' | '/chat/'
+  to: '/' | '/memory' | '/settings' | '/usage' | '/chat/$sessionId' | '/chat'
+  id:
+    | '__root__'
+    | '/'
+    | '/memory'
+    | '/settings'
+    | '/usage'
+    | '/chat/$sessionId'
+    | '/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MemoryRoute: typeof MemoryRoute
   SettingsRoute: typeof SettingsRoute
+  UsageRoute: typeof UsageRoute
   ChatSessionIdRoute: typeof ChatSessionIdRoute
   ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/usage': {
+      id: '/usage'
+      path: '/usage'
+      fullPath: '/usage'
+      preLoaderRoute: typeof UsageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/memory': {
+      id: '/memory'
+      path: '/memory'
+      fullPath: '/memory'
+      preLoaderRoute: typeof MemoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -104,7 +151,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MemoryRoute: MemoryRoute,
   SettingsRoute: SettingsRoute,
+  UsageRoute: UsageRoute,
   ChatSessionIdRoute: ChatSessionIdRoute,
   ChatIndexRoute: ChatIndexRoute,
 }

@@ -21,7 +21,7 @@ function SessionChatPage() {
     }
   }, [sessionsLoaded, loadSessions])
 
-  // Switch to this session
+  // Switch to this session — the store's switchSession handles guards
   useEffect(() => {
     if (!sessionId) return
     switchSession(sessionId)

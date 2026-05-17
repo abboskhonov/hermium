@@ -17,6 +17,14 @@ export interface Session {
   workspace?: string | null
 }
 
+export interface ToolCall {
+  name: string
+  preview: string
+  callId?: string
+  output?: string
+  status: 'running' | 'done' | 'error'
+}
+
 export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system' | 'tool' | 'command'
@@ -30,6 +38,9 @@ export interface Message {
   toolDuration?: number
   isStreaming?: boolean
   reasoning?: string
+  reasoningStartedAt?: number
+  reasoningEndedAt?: number
+  toolCalls?: ToolCall[]
   queued?: boolean
   systemType?: 'command' | 'error'
   commandAction?: string
@@ -61,6 +72,15 @@ export interface UsageRecord {
   model: string
   profile: string
   timestamp: number
+}
+
+export interface MemoryData {
+  memory: string
+  user: string
+  soul: string
+  memory_mtime: number | null
+  user_mtime: number | null
+  soul_mtime: number | null
 }
 
 export interface Job {

@@ -38,16 +38,8 @@ function LandingPage() {
   const handlePromptClick = (prompt: string) => {
     const store = useChatStore.getState()
     store.createNewSession().then((id) => {
-      // Save the prompt as the first message and start the run
-      const userMsg = {
-        id: Date.now().toString(36),
-        role: "user" as const,
-        content: prompt,
-        timestamp: Date.now(),
-      }
-      store.saveAndAppendMessage(id, userMsg).then(() => {
-        store.updateSessionTitle(id)
-        navigate({ to: "/chat/$sessionId", params: { sessionId: id } })
+      navigate({ to: "/chat/$sessionId", params: { sessionId: id } }).then(() => {
+        store.sendMessage(prompt)
       })
     })
   }

@@ -26,7 +26,7 @@ export default function SessionSidebar() {
         </span>
         <button
           onClick={() => createNewSession()}
-          className="inline-flex h-7 items-center justify-center rounded-md bg-primary px-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 gap-1"
+          className="inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-medium text-muted-foreground hover:text-foreground gap-1 transition-colors"
         >
           <IconPlus className="size-3.5" />
           New

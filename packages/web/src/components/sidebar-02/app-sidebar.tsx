@@ -28,8 +28,10 @@ import {
   IconCopy,
   IconSearch,
   IconX,
+  IconBrain,
+  IconChartBar,
 } from "@tabler/icons-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import type { Route } from "./nav-main";
 import { DashboardNavigation } from "@/components/sidebar-02/nav-main";
 import { useChatStore } from "@/stores/chat";
@@ -55,6 +57,7 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
   const navigate = useNavigate();
+  const location = useLocation();
 
   const sessions = useChatStore((s) => s.sessions);
   const activeSessionId = useChatStore((s) => s.activeSessionId);
@@ -62,13 +65,11 @@ export function DashboardSidebar() {
   const pinnedIds = useChatStore((s) => s.pinnedSessionIds);
   const loadSessions = useChatStore((s) => s.loadSessions);
   const deleteStoreSession = useChatStore((s) => s.deleteSession);
-  const createNewSession = useChatStore((s) => s.createNewSession);
   const togglePin = useChatStore((s) => s.togglePin);
   const updateStoreSession = useChatStore((s) => s.updateSession);
 
-  const handleNewChat = async () => {
-    const id = await createNewSession();
-    navigate({ to: "/chat/$sessionId", params: { sessionId: id } });
+  const handleNewChat = () => {
+    navigate({ to: "/" });
   };
 
   // Search
@@ -82,23 +83,19 @@ export function DashboardSidebar() {
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   // Theme
-  const [isDark, setIsDark] = useState(false);
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    const root = document.documentElement;
-    setIsDark(root.classList.contains("dark"));
+    import("@/lib/theme").then(({ getStoredTheme, resolveTheme }) => {
+      setResolvedTheme(resolveTheme(getStoredTheme()))
+    })
   }, []);
 
-  const toggleTheme = () => {
-    const root = document.documentElement;
-    const next = !root.classList.contains("dark");
-    if (next) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    setIsDark(next);
-    localStorage.setItem("hermium-theme", next ? "dark" : "light");
+  const handleToggleTheme = () => {
+    import("@/lib/theme").then(({ toggleTheme }) => {
+      const next = toggleTheme()
+      setResolvedTheme(next === "dark" ? "dark" : "light")
+    })
   };
 
   useEffect(() => {
@@ -140,8 +137,10 @@ export function DashboardSidebar() {
     setTimeout(() => renameInputRef.current?.focus(), 0);
   };
 
+  const isOnChatRoute = location.pathname.startsWith("/chat/")
+
   const visibleSessions = sessions.filter(
-    (s) => (s.messageCount ?? 0) > 0 || s.id === activeSessionId,
+    (s) => (s.messageCount ?? 0) > 0,
   );
 
   const filteredSessions = searchQuery
@@ -186,10 +185,56 @@ export function DashboardSidebar() {
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     onClick={handleNewChat}
-                    className="flex w-full items-center gap-2 rounded-lg bg-primary px-2 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                    className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-sidebar-muted transition-colors"
                   >
                     <IconCirclePlus className="size-4" />
                     {!isCollapsed && <span>New Chat</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+
+              {/* Memory */}
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Memory"
+                    render={
+                      <Link
+                        to="/memory"
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors",
+                          location.pathname === "/memory"
+                            ? "bg-sidebar-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-muted",
+                        )}
+                      />
+                    }
+                  >
+                    <IconBrain className="size-4" />
+                    {!isCollapsed && <span>Memory</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+
+              {/* Usage */}
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    tooltip="Usage"
+                    render={
+                      <Link
+                        to="/usage"
+                        className={cn(
+                          "flex w-full items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-colors",
+                          location.pathname === "/usage"
+                            ? "bg-sidebar-muted text-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-sidebar-muted",
+                        )}
+                      />
+                    }
+                  >
+                    <IconChartBar className="size-4" />
+                    {!isCollapsed && <span>Usage</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -256,7 +301,7 @@ export function DashboardSidebar() {
                         <SessionItem
                           key={s.id}
                           session={s}
-                          isActive={activeSessionId === s.id}
+                          isActive={isOnChatRoute && activeSessionId === s.id}
                           isEditing={editingSessionId === s.id}
                           editTitle={editTitle}
                           setEditTitle={setEditTitle}
@@ -276,7 +321,7 @@ export function DashboardSidebar() {
                         <SessionItem
                           key={s.id}
                           session={s}
-                          isActive={activeSessionId === s.id}
+                          isActive={isOnChatRoute && activeSessionId === s.id}
                           isEditing={editingSessionId === s.id}
                           editTitle={editTitle}
                           setEditTitle={setEditTitle}
@@ -307,7 +352,7 @@ export function DashboardSidebar() {
                             params={{ sessionId: s.id }}
                             className={cn(
                               "flex items-center justify-center rounded-lg transition-colors",
-                              s.id === activeSessionId
+                              isOnChatRoute && s.id === activeSessionId
                                 ? "bg-sidebar-muted text-foreground"
                                 : "text-muted-foreground hover:bg-sidebar-muted hover:text-foreground",
                             )}
@@ -338,16 +383,16 @@ export function DashboardSidebar() {
                   {!isCollapsed && <span>Settings</span>}
                 </Link>
                 <button
-                  onClick={toggleTheme}
+                  onClick={handleToggleTheme}
                   className={cn(
                     "flex items-center justify-center rounded-md text-muted-foreground hover:bg-sidebar-muted hover:text-foreground transition-colors",
                     isCollapsed ? "p-1.5 w-full" : "p-1.5",
                   )}
                   aria-label="Toggle theme"
-                  title={isCollapsed ? (isDark ? "Light mode" : "Dark mode") : undefined}
+                  title={isCollapsed ? (resolvedTheme === "dark" ? "Light mode" : "Dark mode") : undefined}
                 >
-                  <IconSun className="size-3.5 dark:hidden" />
-                  <IconMoon className="size-3.5 hidden dark:block" />
+                  <IconSun className={cn("size-3.5", resolvedTheme === "dark" && "hidden")} />
+                  <IconMoon className={cn("size-3.5", resolvedTheme === "light" && "hidden")} />
                 </button>
               </div>
             </div>

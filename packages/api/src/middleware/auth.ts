@@ -9,7 +9,9 @@ export const authMiddleware = createMiddleware(async (c, next) => {
   }
 
   const authHeader = c.req.header('authorization') || ''
-  const token = authHeader.replace(/^Bearer\s+/i, '')
+  const headerToken = authHeader.replace(/^Bearer\s+/i, '')
+  const queryToken = c.req.query('token') || ''
+  const token = headerToken || queryToken
   const serverToken = await getToken()
 
   if (serverToken && token !== serverToken) {

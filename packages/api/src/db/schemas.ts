@@ -38,6 +38,9 @@ export function initAllHermesTables(): void {
       tool_duration REAL,
       is_streaming INTEGER DEFAULT 0,
       reasoning TEXT,
+      reasoning_started_at INTEGER,
+      reasoning_ended_at INTEGER,
+      tool_calls TEXT,
       queued INTEGER DEFAULT 0
     )
   `)
@@ -133,6 +136,12 @@ export function initAllHermesTables(): void {
       socket_id TEXT
     )
   `)
+
+  // ── Migrations ─────────────────────────────────────────────────
+  // Add columns that may be missing from older DB versions
+  try { db.exec('ALTER TABLE messages ADD COLUMN reasoning_started_at INTEGER') } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE messages ADD COLUMN reasoning_ended_at INTEGER') } catch { /* already exists */ }
+  try { db.exec('ALTER TABLE messages ADD COLUMN tool_calls TEXT') } catch { /* already exists */ }
 
   // Indexes
   db.exec('CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, timestamp)')
