@@ -14,8 +14,10 @@ export interface UsageStatsDailyRow {
   input_tokens: number
   output_tokens: number
   cache_read_tokens: number
+  cache_write_tokens: number
   sessions: number
   errors: number
+  cost?: number
 }
 
 export interface UsageStatsResponse {
@@ -24,6 +26,7 @@ export interface UsageStatsResponse {
   total_cache_read_tokens: number
   total_cache_write_tokens: number
   total_sessions: number
+  total_cost?: number
   period_days: number
   model_usage: UsageStatsModelRow[]
   daily_usage: UsageStatsDailyRow[]

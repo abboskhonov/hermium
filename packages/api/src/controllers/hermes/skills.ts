@@ -202,7 +202,7 @@ export async function listSkills(c: Context) {
 
 export async function readSkillFile(c: Context) {
   const hermesDir = getHermesDir()
-  const filePath = c.req.param('path') ?? ''
+  const filePath = c.req.param('*') ?? ''
   let realPath = filePath
   if (realPath.startsWith('misc/')) realPath = realPath.slice(5)
   const fullPath = resolve(join(hermesDir, 'skills', realPath))

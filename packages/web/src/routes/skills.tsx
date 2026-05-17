@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useMemo } from "react"
 import { fetchSkills, fetchSkillContent, fetchSkillFiles, toggleSkill, type SkillInfo, type SkillCategory, type SkillFileEntry } from "@/api/hermes/skills"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-// Switch component not available - using visual indicators only
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import MarkdownMessage from "@/components/hermes/chat/MarkdownMessage"
 import {
@@ -368,23 +368,12 @@ function SkillsPage() {
                               <span className="text-[10px] text-muted-foreground truncate">{skill.description}</span>
                             )}
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleToggle(cat.name, skill.name, skill.enabled === false)
-                            }}
-                            className={cn(
-                              "shrink-0 h-4 w-7 rounded-full transition-colors relative",
-                              skill.enabled !== false ? "bg-primary" : "bg-muted-foreground/30",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "absolute top-0.5 left-0.5 size-3 rounded-full bg-white transition-transform",
-                                skill.enabled !== false && "translate-x-3",
-                              )}
-                            />
-                          </button>
+                          <Switch
+                            checked={skill.enabled !== false}
+                            onCheckedChange={(v: boolean) => handleToggle(cat.name, skill.name, v)}
+                            className="scale-75 shrink-0"
+                            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                          />
                         </div>
                       ))}
                     </div>
